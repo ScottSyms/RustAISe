@@ -330,7 +330,7 @@ fn main() {
         let source_cache = Arc::clone(&mut source_cache);
         let sat_time_cache = Arc::clone(&mut sat_time_cache);
 
-        // Clonen a
+        // Clonen an output channel for use in the threads
         let ready_for_output_tx = ready_for_output_tx.clone();
 
         // Clone the crossbeam channels for use in thread

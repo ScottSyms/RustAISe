@@ -298,8 +298,9 @@ Each hashmap needs a lock defined in each thread to deconflict the reads and del
 ### JSON serialization
 The SERDE crate offers a convenient way to serialize a struct to a JSON string.  At the end of the parsing cycle, each thread converts the populated struct to JSON for writing to file.
 
-\```
+```
     ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
+
 ```
 
 ## Running the program
@@ -310,7 +311,7 @@ error: The following required arguments were not provided:
     <OUTPUT>
 
 USAGE:
-    rawnmeastructures <INPUT> <OUTPUT> [FLOW_LIMIT]
+    rustaise <INPUT> <OUTPUT> [FLOW_LIMIT]
 
 For more information try --help
 ```
@@ -322,7 +323,7 @@ Scott Syms <ezrapound1967@gmail.com>
 Does selective parsing of a raw AIS stream
 
 USAGE:
-    rawnmeastructures <INPUT> <OUTPUT> [FLOW_LIMIT]
+    rustaise <INPUT> <OUTPUT> [FLOW_LIMIT]
 
 ARGS:
     <INPUT>         Sets the input file to use
@@ -336,16 +337,16 @@ OPTIONS:
 
 ```
 
-Uncompressing the _norway.7z_ program and running the following will generage a JSON file with parsed contents.
+Uncompressing the _norway.7z_ program and running the following will generate a JSON file with parsed contents.
 ```
-rawnmeastructures norway.nmea norway.json
+rustaise norway.nmea norway.json
 ```
 the _flow control_ parameter allows you to limit the the data held in the message channels.  In some memory constrained systems, capping in-flight messages prevents out of memory issues.
 
 ### It's "blazingly" fast
 Rust lives up to its advertising as "blazingly" fast language.
 
-All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.
+All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter.
 
 | Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
 |------------|------:|----:|--------:|--------:|--------:|-----------------:|
@@ -365,9 +366,11 @@ Generally, Rust works as advertised and the effort in learning the language is p
 
 
 ### Getting the code
+All code is available at https://github.com/ScottSyms/RustAISe.
 
+Please feel free to use it and I'd appreciate any feedback you might have.
 
-## License
+## Licenses
 The archive includes a 7zip compressed sample of AIS data from the government of Norway.  It's made available under the Norwegian Licence for Open Government Data (NLOD) 2.0[^norway].
 
 [^norway]: https://www.kystverket.no/en/navigation-and-monitoring/ais/access-to-ais-data/
