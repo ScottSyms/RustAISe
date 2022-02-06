@@ -1,28 +1,30 @@
 # Limits of Python
 
-It's the richness of the Python ecosystem that makes it useful for data science. With Python, there's a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python development environment, replace the traditional scientific paper[^atlantic].
+It's the richness of the Python ecosystem that makes it useful for data science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
 
 [^atlantic]: https://www.theatlantic.com/science/archive/2018/04/the-scientific-paper-is-obsolete/556676/
 
 But Python has issues- the very elements that make it accessible and usable- dynamic typing, reference counting and the global interpreter lock- prevent your programs from making full use of available computing resources.
 
-For scientists working with large data or heavy computation, Python provides some work arounds- computational accelerations like Numba, PyPy and Piston use coding optimisations to add speed; distributing the compute across several machines with Dask aggregates the computing power of several machine;  and interfaces to big data  toolkits like PyData leverage the huge ecosystem built on Hadoop and friends. All of these solution complicate the development and deployment environments.
+For scientists working with large data or heavy computation, Python provides some work arounds- computational accelerations like Numba, PyPy and Piston use coding optimisations to add speed; distributing the compute across several machines with Dask aggregates the computing power of several machines;  and interfaces to big data  toolkits like PyData leverage the huge ecosystem built on Hadoop and friends. All of these solution add complexity to the development and deployment environments.
 
-Number crunchers can take recourse in lower-level languages such as C and C++, but they bring with them their own challenges with memory management and maintainability.
+Number crunchers can take recourse in lower-level languages such as C and C++, but they bring their own challenges with memory management and maintainability.
 
-Near the end of 2020, the science publication _Nature_ suggested an alternative[^nataure] to some of the traditional approaches to science computation. 
+Near the end of 2020, the science publication _Nature_ suggested an alternative[^nature] to some of the traditional approaches to science data computation. It suggested Rust, a highly performant new language.
 
 [^nature]: https://www.nature.com/articles/d41586-020-03382-2
 
-The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++ but provides better safeguards around memory safety and concurrency. Like C++ (and Python), it can be used across a range of platforms, from dedicated microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing it to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
+The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++ but provides better safeguards around memory safety and concurrency. Like C++ (and Python), it can be used across a range of platforms, from dedicated microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing them to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
 
 I was curious how Rust could help with a data issue that emerges from the global monitoring of ships.
 
 # Automatic Identity System
 
-By international agreement, ocean going ships must transmit voyage data using the _Automatic Identity System_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data. On any given day, the Agency makes millions of position reports available to maritime stakeholders across government.
+By international agreement, ocean going ships must transmit voyage data using the _Automatic Identity System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
 
-Over the past decade CSA has collected well over 50 billion AIS messages. The data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
+[ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
+
+ The data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
 
 ```
 1569890647\s:VENDOR,q:u,c:1569890555*5F\!AIVDM,1,1,,A,13KG9?10031jQUNRI72jM5?40>@<,0*5C
@@ -33,15 +35,16 @@ Over the past decade CSA has collected well over 50 billion AIS messages. The da
 
 _A sample of ship positional data in NMEA 0183 format. The Government of Canada consumes up to 80 million of these messages in a day from various sources._
 
-Each sentence contains metadata about the position report, including the time the observation was made by the satellite, the source of the detection, the time the report was relayed from satellite to a ground station and whether the sentence is a fragment of a group of messages. Although some of the message is readable, important data about ship identity and movement is wrapped in a six-bit ascii payload that looks like transmission errors near the end of the sentence. Eric Raymond's AIVDM/AIVDO protocol decoding[^raymond] website is a detailed guide to AIS structure.
+Each sentence contains metadata about the position report, including the time the observation was made by the sensor, the source of the detection, the time the report was relayed from satellite to a ground station and whether the sentence is a fragment of a group of messages. 
+
+Although some of the message is readable, important data about ship identity and movement is wrapped in a six-bit ascii payload that looks like transmission errors near the end of the sentence. Eric Raymond's AIVDM/AIVDO protocol decoding[^raymond] website is a detailed guide to AIS structure.
 
 [^raymond]: https://gpsd.gitlab.io/gpsd/AIVDM.html
 
 Converting a large AIS archive is a good task for Rust. 
 
-# Parsing AIS data
-
-The goal it to get to a JSON packet that will largely preserve the original data for reprocessing if needed, but also allow it to be loaded in Pandas, a database, or stored in a read optimal format like parquet or feather.
+## The Parsing Task
+The goal of this program is to convert to a JSON packet that will preserve the original data for reprocessing if needed, but also exposes some of the data in the message for filtering.  Reformatting the data as JSON allows it to be loaded in Pandas, a database, or further translated into a read optimal format like parquet or feather.
 
 ```
 {
@@ -72,25 +75,25 @@ The goal it to get to a JSON packet that will largely preserve the original data
 
 _The desired output: JSON packet preserving original data alongside derived elements._
 
-It's straightforward to use REGEX searches to pull out the human readable data in the sentence, but much of the vital ship information is encoded the six-bit _payload_ near the end of the sentence.
+It's straightforward to use REGEX to extract the human readable data in the sentence, but much of the vital ship information is encoded in the six-bit _payload_ near the end of the sentence.
 
-This involves converting the text to a binary string, extracting some of the bits and casting the result as a string, or an integer.
+Reading this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
 
 <<Diagram>>
 
-## Sizing up the program with Rust
 
-The program I wrote uses threads to distribute the workload over all available computer cores with message passing channels relaying the data between threads. The processing is divided into three pools: the first is a single threaded process that reads a source file of AIS data, inserts the data into a struct field, and passes the struct to a pool of threads that does the initial parsing through a channel.
+
+The program I wrote uses threads to distribute the workload over all available computer cores with message passing channels relaying the data between threads. The processing is divided into three pools: the first is a single threaded process that reads a source file of AIS data, inserts each line into a struct field, and passes the struct to a pool of threads that does the initial parsing through a channel.
 
 The receiving thread parses the single line position messages, and forwards the results to a file writer as a JSON packet. Multiline sentences are passed to a second pool of threads that cache and reassemble sentence fragments. Again these results are forwarded to the file writer as a JSON string.
 
 ## Walking through the program
 
-The following notes are some of the observations I made attacking the problem from the perspective of a Python programmer.
+The following are some observations I made attacking the problem from the perspective of a Python programmer.
 
-### Crates and "deterministic" compiling
+### Crates and version pinning
 
-Rust makes use of a well thought out packaging system called _crates_. Package dependencies and build directives can be explicitly specified in this file.
+Rust makes use of a well thought out packaging system called _crates_. Package dependencies and build directives can be specified in this file.
 
 ```
 [package]
@@ -113,7 +116,7 @@ serde_json = "1.0.78"
 lto = true
 ```
 
-Dependencies must be listed with a version; upgrading to a different version of the library has to be done explicitly, preventing compile errors from creeping dependency version.
+Dependencies must be listed with a version; upgrading to a different version of the library has to be done explicitly, mitigating errors from moving to different library versions.
 
 ### The iron fist of variable scoping
 One of the methods Rust uses to maintain memory safety is to tightly control variable scope.
@@ -136,10 +139,12 @@ if y == 1 {
 } else {
     let x = 0;
 }
+println!("{}", x);
+
 }
 ```
 
-One way to deal with this is to create a anonymous function.
+One way to deal with this is to create a anonymous function where the output of the function is assigned to the variable.
 
 ```
 let y = 1;
@@ -152,10 +157,11 @@ let x: i8 ={
         0
     }
 };
-    println!("{}", x);
+    
+println!("{}", x);
 ```
 
-The rigid control of variable lifetimes and ownership changes the way you program.
+The rigid control of variable lifetimes and ownership changes the way you structure your program.
 
 ### Resistance is futile
 
@@ -172,9 +178,9 @@ For more information about this error, try `rustc --explain E0308`.
 error: could not compile `playground` due to previous error
 ```
 
-While sometimes frustrating, the compiler's messages are very helpful in determining the cause of the error.  In online help, it's often recommended to work with rather than against the compiler.
+While sometimes frustrating, the compiler's messages are very helpful in determining the cause of the error.  The mantra "work with the compiler" is often seen in online comments.
 
-## Touring the code
+## RustAISe- the program
 
 The software begins by defining a struct that will hold the raw sentences and extracted data as it passes through the workflow.
 
@@ -207,9 +213,11 @@ struct PositionReport {
 } // end of struct PositionReport
 ```
 
-Note the _#Derive_ keyword preceding the struct definition. Although Rust is not an object oriented language like Java, it allows methods to be shared across structures using a feature called _Traits_. In the declaration above, the Serialize, Default, Clone and Debug traits are being added the struct.
+Note the _#Derive_ keyword preceding the struct definition. Although Rust is not an object-oriented language like Java, it allows methods to be shared across structures using a feature called _Traits_ in a way that resembles inheritance.
 
-### Defining thread pools
+In the declaration above, the Serialize, Default, Clone and Debug traits are being added the struct.
+
+### Thread Pools
 
 Defining thread pools is quite simple in Rust. The program finds the number of available cores and declares the number of workers for each thread.
 
@@ -222,16 +230,18 @@ For loops are used to launch individual threads.
     let reading_thread = ThreadPool::new(1);
     let extraction_pool = ThreadPool::new(n_workers);
     let multiline_assembly_thread = ThreadPool::new(n_workers);
-for _a..n_workers: {
-     multiline_assembly.execute(move || {
-        // Do stuff
-    }}
 
-for _b..n_workers: {
-     extraction_pool.execute(move || {
-        // Do stuff
+    for _a..n_workers: {
+        multiline_assembly.execute(move || {
+            // Do stuff
+        }
     }
-}
+
+    for _b..n_workers: {
+        extraction_pool.execute(move || {
+            // Do stuff
+        }
+    }
 
     reading_thread.execute(move || {
         // Do stuff
@@ -240,22 +250,18 @@ for _b..n_workers: {
 The _move_ keyword passes the current variables to the thread.
 
 
-### Channel Definitions and flow control
-The relay channels between the threads are defined with a limit to prevent the producing threads from overfilling the channel and exhausting memory.  By default the value is set to 500,000 elements, but it can be changed from the command line to best fit the available memory.
+### Channel Definitions and Flow Control
+The relay channels between the threads are defined with a limit to prevent the producing threads from overfilling the channel and exhausting memory.  By default the program sets the upper bound to 500,000 elements, but it can be changed from the command line to best fit the available memory.
 
 Each declaration defines a sending and receiving channel, and the data types that will be running across the message bus.
 
 ```
-    let (raw_file_tx, raw_file_rx): (Sender<PositionReport>, Receiver<PositionReport>) =
-        bounded(flow_limit);
-    let (multiline_handling_tx, multiline_handling_rx): (
-        Sender<PositionReport>,
-        Receiver<PositionReport>,
-    ) = bounded(flow_limit);
+    let (raw_file_tx, raw_file_rx): (Sender<PositionReport>, Receiver<PositionReport>) = bounded(flow_limit);
+    let (multiline_handling_tx, multiline_handling_rx): ( Sender<PositionReport>, Receiver<PositionReport>) = bounded(flow_limit);
     let (ready_for_output_tx, ready_for_output_rx): (Sender<String>, Receiver<String>) =
         bounded(flow_limit);
 ```
-Because of Rust's rules on variable reuse, the channel data type has to be cloned in each thread, but each clone refers to the same instance of the message bus.
+Because of Rust's rules on variable reuse, the channel data type has to be _cloned_ in each thread, but each clone refers to the same instance of the message bus.
 
 ```
      extraction_pool.execute(move || {
