@@ -352,7 +352,7 @@ the _flow control_ parameter allows you to limit the the data held in the messag
 ### It's "blazingly" fast
 Rust lives up to its advertising as "blazingly" fast language.
 
-All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter.
+All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter with the final column forecasting the number of postion file lines that can be processed in a day.
 
 | Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
 |------------|------:|----:|--------:|--------:|--------:|-----------------:|
