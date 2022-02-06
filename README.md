@@ -273,8 +273,8 @@ Because of Rust's rules on variable reuse, the channel data type has to be _clon
 
 ### Matching messages
 
-### Arc Mutexes and Hashmaps
-Assembling multiline messages in multiple threads requires caching sentence fragments in a shareable way.  This program uses a shared hashmap wrapped in a mutex to hold sentence fragments. Again
+### Arc Mutexes and Hash maps
+Assembling multiline messages in multiple threads requires caching sentence fragments in a shareable way.  This program uses a shared hash-map wrapped in a mutex to hold sentence fragments. Again
 ```
     // Initiate Hashmaps for multisentence AIS messages
     // These are wrapped by ARC and Mutexes for use under multithreading.
@@ -293,7 +293,7 @@ Like the interprocess channels, the must be cloned in each thread instance.
     let source_cache = Arc::clone(&mut source_cache);
     let sat_time_cache = Arc::clone(&mut sat_time_cache);
 ```
-Each hashmap needs a lock defined in each thread to deconflict the reads and deletes from multiple threads.
+Each hash map needs a lock defined in each thread to deconflict the reads and deletes from multiple threads.
 
 ```
     let mut payload_lock = payload_cache.lock().unwrap();
@@ -352,7 +352,7 @@ the _flow control_ parameter allows you to limit the the data held in the messag
 ### It's "blazingly" fast
 Rust lives up to its advertising as "blazingly" fast language.
 
-All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter with the final column forecasting the number of postion file lines that can be processed in a day.
+All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter with the final column forecasting the number of position file lines that can be processed in a day.
 
 | Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
 |------------|------:|----:|--------:|--------:|--------:|-----------------:|
@@ -364,11 +364,15 @@ These figures suggest that the software would be able to process a 50 billion ro
 
 
 ### Last Thoughts
-This is a first attempt to do some serious programing in Rust, but even from this vantage point, I'm able to see room for improvement.  My concerns largely orbit around whether the code is idiomatic, ie/ making the best use of what Rust offers to solve the problem domain.
+This is my first attempt to do some serious programming in Rust, but even from this vantage point, I'm able to see room for improvement.  
 
-First, this program largely ignores Rust's error handling framework.  Initializing the struct with default values may unnecessarily consume memory and leveraging struct methods and custom traits may offer some advantage. Definitely refactoring the code into Rust's library and module format would be a step toward code readability.  Rust offers unit-testing framework that would make the code more maintainable.
+Being new to the language, I know that my approach to the solution may not be idiomatic, ie/ making the best use of what Rust offers to solve the problem, but I'm pleased with my progress on a first attempt.
 
-Generally, Rust works as advertised and the effort in learning the language is paid back in situations where the code will be reused or execution time is a concern.
+The program largely ignores Rust's error handling framework.  Initializing the struct with default values may unnecessarily consume memory. Leveraging struct methods and custom traits may offer some advantages. 
+
+Definitely refactoring the code into Rust's library and module format would be a step toward code readability.  Finally, Rust offers unit-testing framework that would make the code more maintainable.
+
+Generally, the juice is worth the squeeze here. Rust works as advertised and the effort in learning the language would be paid back in situations where the code will be reused or execution time is a concern.
 
 
 ### Getting the code
