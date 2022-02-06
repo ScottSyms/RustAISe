@@ -349,8 +349,8 @@ rustaise norway.nmea norway.json
 ```
 the _flow control_ parameter allows you to limit the the data held in the message channels.  In some memory constrained systems, capping in-flight messages prevents out of memory issues.
 
-### It's "blazingly" fast
-Rust lives up to its advertising as "blazingly" fast language.
+### It's _blazingly_ fast
+Rust lives up to its advertising as a _blazingly_ fast language.
 
 All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter with the final column forecasting the number of position file lines that can be processed in a day.
 
