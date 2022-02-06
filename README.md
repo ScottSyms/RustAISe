@@ -79,7 +79,7 @@ It's straightforward to use REGEX to extract the human readable data in the sent
 
 Reading this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
 
-<<Diagram>>
+DIAGRAM
 
 
 
