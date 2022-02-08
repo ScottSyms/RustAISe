@@ -1,6 +1,6 @@
 # Limits of Python
 
-It's the richness of the Python ecosystem that makes it useful for data science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
+It's the richness of the Python ecosystem that makes it so useful for data science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
 
 [^atlantic]: https://www.theatlantic.com/science/archive/2018/04/the-scientific-paper-is-obsolete/556676/
 
@@ -22,7 +22,7 @@ I was curious how Rust could help with a data issue that emerges from the global
 
 By international agreement, ocean going ships must transmit voyage data using the _Automatic Identity System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
 
-[ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
+[^ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
 
  The data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
 
@@ -60,9 +60,10 @@ The goal of this program is to convert to a JSON packet that will preserve the o
     "mmsi":"725000984",
     "latitude":-45.385661666666664,
     "longitude":-73.55857,
-    "call_sign":"","destination":"",
-    "name":"",
-    "ship_type":"",
+    "call_sign":"CQ4F3",
+    "destination":"HALIFAX",
+    "name":"SS MINNOW",
+    "ship_type":"23",
     "eta":"",
     "draught":"",
     "imo":"",
@@ -79,13 +80,16 @@ It's straightforward to use REGEX to extract the human readable data in the sent
 
 Reading this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
 
-DIAGRAM
+![Converting six-bit ascii to text](bitextract.png)
 
 
 
 The program I wrote uses threads to distribute the workload over all available computer cores with message passing channels relaying the data between threads. The processing is divided into three pools: the first is a single threaded process that reads a source file of AIS data, inserts each line into a struct field, and passes the struct to a pool of threads that does the initial parsing through a channel.
 
 The receiving thread parses the single line position messages, and forwards the results to a file writer as a JSON packet. Multiline sentences are passed to a second pool of threads that cache and reassemble sentence fragments. Again these results are forwarded to the file writer as a JSON string.
+
+![Program overview](flow.png)
+
 
 ## Walking through the program
 

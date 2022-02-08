@@ -215,6 +215,9 @@ fn last_four_characters(text: &str) -> &str {
 } // endof last_four_characters
 
 fn main() {
+    // Workers are the number of CPUs.
+    let n_workers = num_cpus::get();
+
     // Process the command line arguments
     let matches = App::new("AIS parsing program")
         .version("1.0")
@@ -229,9 +232,7 @@ fn main() {
         .arg(
             Arg::new("OUTPUT")
                 .help("Sets a custom output file")
-
                 .required(true)
-
                 .takes_value(true)
                 .index(2),
         )
@@ -242,6 +243,22 @@ fn main() {
                 )
                 .takes_value(true)
                 .index(3),
+        )
+        .arg(
+            Arg::new("PARSE_THREADS")
+                .help(
+                    "Sets the number of threads to use for parsing (default: number of CPUs)",
+                )
+                .takes_value(true)
+                .index(4),
+        )
+        .arg(
+            Arg::new("MULTILINE_THREADS")
+                .help(
+                    "Sets the number of threads to use for multiline parsing (default: number of CPUs)",
+                )
+                .takes_value(true)
+                .index(5),
         )
         .get_matches();
 
@@ -271,7 +288,27 @@ fn main() {
             // default value
             500_000
         }
-    }; // let output_file
+    }; // let flow_limit
+
+    // Match the parse_threads variable
+    let extraction_threads: usize = {
+        if let Some(i) = matches.value_of("EXTRACTION_THREADS") {
+            i.parse::<usize>().unwrap()
+        } else {
+            // default value
+            n_workers
+        }
+    }; // let parse_threads
+
+    // Match the multiline_threads variable
+    let multiline_threads: usize = {
+        if let Some(i) = matches.value_of("MULTILINE_THREADS") {
+            i.parse::<usize>().unwrap()
+        } else {
+            // default value
+            n_workers
+        }
+    }; // let multiline_threads
 
     // Initiate Hashmaps for multisentence AIS messages
     // These are wrapped by ARC and Mutexes for use under multithreading.
@@ -300,9 +337,6 @@ fn main() {
     // clone a channel for use in the threads
     let extract_ready_for_output_tx = ready_for_output_tx.clone();
 
-    // Workers are the number of CPUs.
-    let n_workers = num_cpus::get();
-
     // How many milliseconds to wait before calling
     // the data queue empty.
     let queue_timeout = 5 * 1000;
@@ -315,8 +349,8 @@ fn main() {
     The final pool assembles multiline messages from fragments.
     */
     let reading_thread = ThreadPool::new(1);
-    let extraction_pool = ThreadPool::new(n_workers);
-    let multiline_assembly_thread = ThreadPool::new(n_workers);
+    let extraction_pool = ThreadPool::new(extraction_threads);
+    let multiline_assembly_thread = ThreadPool::new(multiline_threads);
 
     // Compile the regexes used to do the initial parse of the raw file
     let sat_re = Regex::new(r"c:(\d+)").unwrap();
