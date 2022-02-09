@@ -1,22 +1,20 @@
-# Limits of Python
-
-It's the richness of the Python ecosystem that makes it so useful for data science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
+# DRAFT DRAFT DRAFT
+# Data Engineering in Rust
+It's the richness of the Python ecosystem that makes it so useful for  science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
 
 [^atlantic]: https://www.theatlantic.com/science/archive/2018/04/the-scientific-paper-is-obsolete/556676/
 
 But Python has issues- the very elements that make it accessible and usable- dynamic typing, reference counting and the global interpreter lock- prevent your programs from making full use of available computing resources.
 
-For scientists working with large data or heavy computation, Python provides some work arounds- computational accelerations like Numba, PyPy and Piston use coding optimisations to add speed; distributing the compute across several machines with Dask aggregates the computing power of several machines;  and interfaces to big data  toolkits like PyData leverage the huge ecosystem built on Hadoop and friends. All of these solution add complexity to the development and deployment environments.
+For scientists working with large data or heavy computation, Python provides some work arounds- computational accelerations like Numba, PyPy and Piston use coding optimisations to add speed; distributing the compute across several machines with Dask aggregates the computing power of several machines;  and interfaces to big data  toolkits like PyData leverage the huge ecosystem built on Hadoop and friends. All of these solutions add complexity to development and deployment environments.
 
-Number crunchers can take recourse in lower-level languages such as C and C++, but they bring their own challenges with memory management and maintainability.
-
-Near the end of 2020, the science publication _Nature_ suggested an alternative[^nature] to some of the traditional approaches to science data computation. It suggested Rust, a highly performant new language.
+Near the end of 2020, the science publication _Nature_ suggested an alternative[^nature] to some of the traditional approaches to science data computation. It suggested Rust, an emerging, highly performant new language.
 
 [^nature]: https://www.nature.com/articles/d41586-020-03382-2
 
-The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++ but provides better safeguards around memory safety and concurrency. Like C++ (and Python), it can be used across a range of platforms, from dedicated microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing them to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
+The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++, but provides better safeguards around memory safety and concurrency. Like C++ and Python, it can be used across a range of platforms, from microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing them to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
 
-I was curious how Rust could help with a data issue that emerges from the global monitoring of ships.
+I was curious how Rust could help with a data engineering issue that emerges from the global monitoring of ships.
 
 # Automatic Identity System
 
@@ -37,14 +35,12 @@ _A sample of ship positional data in NMEA 0183 format. The Government of Canada 
 
 Each sentence contains metadata about the position report, including the time the observation was made by the sensor, the source of the detection, the time the report was relayed from satellite to a ground station and whether the sentence is a fragment of a group of messages. 
 
-Although some of the message is readable, important data about ship identity and movement is wrapped in a six-bit ascii payload that looks like transmission errors near the end of the sentence. Eric Raymond's AIVDM/AIVDO protocol decoding[^raymond] website is a detailed guide to AIS structure.
+Although some of the message is human readable, important data about ship identity and movement is wrapped in a six-bit ASCII payload near the end of the sentence. Eric Raymond's AIVDM/AIVDO protocol decoding[^raymond] website is a detailed guide to how ship data is packed in the string.
 
 [^raymond]: https://gpsd.gitlab.io/gpsd/AIVDM.html
 
-Converting a large AIS archive is a good task for Rust. 
-
-## The Parsing Task
-The goal of this program is to convert to a JSON packet that will preserve the original data for reprocessing if needed, but also exposes some of the data in the message for filtering.  Reformatting the data as JSON allows it to be loaded in Pandas, a database, or further translated into a read optimal format like parquet or feather.
+## Decoding AIS
+The goal of this program is to convert an archive of raw AIS data to a JSON equivalent.  The output should preserve the original data for reprocessing if needed, but also expose some of the data in the message for filtering on load.  Reformatting the data as JSON is a valuable step in the data engineering pipeline as it allows the datato be loaded in Pandas, a database, or further translated into a read optimized format like Apache Parquet or feather.
 
 ```
 {
@@ -76,24 +72,19 @@ The goal of this program is to convert to a JSON packet that will preserve the o
 
 _The desired output: JSON packet preserving original data alongside derived elements._
 
-It's straightforward to use REGEX to extract the human readable data in the sentence, but much of the vital ship information is encoded in the six-bit _payload_ near the end of the sentence.
-
-Reading this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
+REGEX is used to extract the human readable data in the AIS sentence, but work has to be done to unwrap the the data from the six-bit payload. Unlocking this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
 
 ![Converting six-bit ascii to text](bitextract.png)
+_Extracting data from the payload requires it to be converted to binary._
 
-
-
+# Walking through the program
 The program I wrote uses threads to distribute the workload over all available computer cores with message passing channels relaying the data between threads. The processing is divided into three pools: the first is a single threaded process that reads a source file of AIS data, inserts each line into a struct field, and passes the struct to a pool of threads that does the initial parsing through a channel.
 
 The receiving thread parses the single line position messages, and forwards the results to a file writer as a JSON packet. Multiline sentences are passed to a second pool of threads that cache and reassemble sentence fragments. Again these results are forwarded to the file writer as a JSON string.
 
 ![Program overview](flow.png)
 
-
-## Walking through the program
-
-The following are some observations I made attacking the problem from the perspective of a Python programmer.
+The following are some of the highlights of the program.
 
 ### Crates and version pinning
 
@@ -120,7 +111,7 @@ serde_json = "1.0.78"
 lto = true
 ```
 
-Dependencies must be listed with a version; upgrading to a different version of the library has to be done explicitly, mitigating errors from moving to different library versions.
+Crate dependencies must be listed with a specific version; upgrading to a different release of the crate has to be done explicitly, mitigating errors from moving to different library versions.
 
 ### The iron fist of variable scoping
 One of the methods Rust uses to maintain memory safety is to tightly control variable scope.
@@ -148,7 +139,7 @@ println!("{}", x);
 }
 ```
 
-One way to deal with this is to create a anonymous function where the output of the function is assigned to the variable.
+One way to deal with this is to create a anonymous function where the output of the function is assigned to the variable.  Variable assignments with nested _if_ and _match_ evaluations are used throughout the program.
 
 ```
 let y = 1;
@@ -183,8 +174,6 @@ error: could not compile `playground` due to previous error
 ```
 
 While sometimes frustrating, the compiler's messages are very helpful in determining the cause of the error.  The mantra "work with the compiler" is often seen in online comments.
-
-## RustAISe- the program
 
 The software begins by defining a struct that will hold the raw sentences and extracted data as it passes through the workflow.
 
@@ -251,7 +240,7 @@ For loops are used to launch individual threads.
         // Do stuff
     }
 ```
-The _move_ keyword passes the current variables to the thread.
+The _for_ loops control the number of threads launched, while the _move_ keyword passes the current variables to the thread.
 
 
 ### Channel Definitions and Flow Control
@@ -265,7 +254,7 @@ Each declaration defines a sending and receiving channel, and the data types tha
     let (ready_for_output_tx, ready_for_output_rx): (Sender<String>, Receiver<String>) =
         bounded(flow_limit);
 ```
-Because of Rust's rules on variable reuse, the channel data type has to be _cloned_ in each thread, but each clone refers to the same instance of the message bus.
+Because of Rust's rules on variable reuse, the channel data type has to be _cloned_ in each thread, but each clone actually refers to the original instance of the message bus.
 
 ```
      extraction_pool.execute(move || {
@@ -304,7 +293,7 @@ From there, the message type can be matched against parsing templates and other 
 ```
 
 ### Arc Mutexes and Hash maps
-Assembling multiline messages in multiple threads requires caching sentence fragments in a shareable way.  This program uses a shared hash-map wrapped in a mutex to hold sentence fragments. Again
+Assembling multiline messages in multiple threads requires caching sentence fragments in a shareable way.  This program uses a shared hash-map wrapped in a mutex to hold sentence fragments. 
 ```
     // Initiate Hashmaps for multisentence AIS messages
     // These are wrapped by ARC and Mutexes for use under multithreading.
@@ -315,7 +304,7 @@ Assembling multiline messages in multiple threads requires caching sentence frag
     let mut sat_time_cache: Arc<Mutex<HashMap<String, String>>> =
         Arc::new(Mutex::new(HashMap::new()));
 ```
-Like the interprocess channels, the must be cloned in each thread instance.
+Like the interprocess channels, the hash maps must be cloned in each thread instance.
 
 ```
     // Initiate Hashmaps for multisentence AIS messages
@@ -329,8 +318,12 @@ Each hash map needs a lock defined in each thread to deconflict the reads and de
     let mut payload_lock = payload_cache.lock().unwrap();
     let mut source_lock = source_cache.lock().unwrap();
     let mut sat_time_lock = sat_time_cache.lock().unwrap();
-```
 
+    // insert into time cache if struct field is not empty
+    if line.satellite_acquisition_time.len() > 0 {
+        sat_time_lock.insert(line.group.clone(), line.satellite_acquisition_time);
+        }
+```
 ### JSON serialization
 The SERDE crate offers a convenient way to serialize a struct to a JSON string.  At the end of the parsing cycle, each thread converts the populated struct to JSON for writing to file.
 
@@ -339,6 +332,11 @@ The SERDE crate offers a convenient way to serialize a struct to a JSON string. 
 
 ```
 
+The output of the program can be loaded in Pandas with the following command.
+```
+import pandas as pd
+df=pd.read_json("output.json", lines=True)
+```
 ## Running the program
 Executing the program without parameters will output the following.
 ```
@@ -359,17 +357,22 @@ Scott Syms <ezrapound1967@gmail.com>
 Does selective parsing of a raw AIS stream
 
 USAGE:
-    rustaise <INPUT> <OUTPUT> [FLOW_LIMIT]
+    rustaise <INPUT> <OUTPUT> [ARGS]
 
 ARGS:
-    <INPUT>         Sets the input file to use
-    <OUTPUT>        Sets a custom output file
-    <FLOW_LIMIT>    Sets a limit on the number of objects in memory at one time (default:
-                    500000)
+    <INPUT>                Sets the input file to use
+    <OUTPUT>               Sets a custom output file
+    <FLOW_LIMIT>           Sets a limit on the number of objects in memory at one time (default:
+                           500000)
+    <PARSE_THREADS>        Sets the number of threads to use for parsing (default: number of
+                           CPUs)
+    <MULTILINE_THREADS>    Sets the number of threads to use for multiline parsing (default:
+                           number of CPUs)
 
 OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
+
 
 ```
 
@@ -377,12 +380,13 @@ Uncompressing the _norway.7z_ program and running the following will generate a 
 ```
 rustaise norway.nmea norway.json
 ```
-the _flow control_ parameter allows you to limit the the data held in the message channels.  In some memory constrained systems, capping in-flight messages prevents out of memory issues.
+the _FLOW LIMIT_ parameter allows you to limit the the data held in the message channels.  In some memory constrained systems, capping in-flight messages prevents out of memory issues.  The _PARSE THREADS_ and _MULTILINE THREADS_ are optional parameters that provide control over the number of threads created for the single and multiple line parsing threads.
 
-### It's _blazingly_ fast
+
+### Speed results
 Rust lives up to its advertising as a _blazingly_ fast language.
 
-All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  The row indicates the size of the input file; each column shows the value for the flow control parameter with the final column forecasting the number of position file lines that can be processed in a day.
+All results are from running Macbook 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
 
 | Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
 |------------|------:|----:|--------:|--------:|--------:|-----------------:|
@@ -391,7 +395,6 @@ All results are from running 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  
 | 174 million | 435s | 420s | 440s | 439s | 558s | 34,560,000,000|
 
 These figures suggest that the software would be able to process a 50 billion row AIS archive in just under two days on a single laptop.
-
 
 ### Last Thoughts
 This is my first attempt to do some serious programming in Rust, but even from this vantage point, I'm able to see room for improvement.  
@@ -404,13 +407,14 @@ Definitely refactoring the code into Rust's library and module format would be a
 
 Generally, the juice is worth the squeeze here. Rust works as advertised and the effort in learning the language would be paid back in situations where the code will be reused or execution time is a concern.
 
-
 ### Getting the code
 All code is available at https://github.com/ScottSyms/RustAISe.
 
 Please feel free to use it and I'd appreciate any feedback you might have.
 
 ## Licenses
+The software is made available under an Apache 2.0 license.
+
 The archive includes a 7zip compressed sample of AIS data from the government of Norway.  It's made available under the Norwegian Licence for Open Government Data (NLOD) 2.0[^norway].
 
 [^norway]: https://www.kystverket.no/en/navigation-and-monitoring/ais/access-to-ais-data/
