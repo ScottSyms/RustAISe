@@ -390,9 +390,9 @@ All results are from running Macbook 2.3 GHz 8-Core Intel Core i9 with 32Gb of m
 
 | Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
 |------------|------:|----:|--------:|--------:|--------:|-----------------:|
-| 1 million | 7s | 8s | 7s | 9s | 11s |12,342,857,142|
-| 25 million | 65s | 63s | 62s | 59s | 66s |33,230,769,230 |
-| 174 million | 435s | 420s | 440s | 439s | 558s | 34,560,000,000|
+| 1 million | 7s |12,342,857,142|
+| 25 million | 65s |33,230,769,230 |
+| 174 million | 34,560,000,000|
 
 These figures suggest that the software would be able to process a 50 billion row AIS archive in just under two days on a single laptop.
 
