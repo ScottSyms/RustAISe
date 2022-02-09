@@ -276,6 +276,32 @@ Because of Rust's rules on variable reuse, the channel data type has to be _clon
 ```
 
 ### Matching messages
+AIS message types determine how ship information is stored in the six-bit payload, so any parsing task has to begin with carving out the type of the current sentence and casting it as an unsigned INT in the appropriate struct field.
+
+```
+line.message_type = pick_u64(&payload, 0, 6);
+```
+
+From there, the message type can be matched against parsing templates and other fields in the struct populated.
+
+```
+ match line.message_type {
+        1 | 2 | 3 => {
+            // If the message is class A kinetic.
+            line.mmsi = format!("{}", pick_u64(&payload, 8, 30));
+            line.latitude = pick_i64(&payload, 89, 27) as f64 / 600_000.0;
+            line.longitude = pick_i64(&payload, 61, 28) as f64 / 600_000.0;
+            ...
+        }
+        5 => {
+            // If the message is class A static.
+            line.mmsi = format!("{}", pick_u64(&payload, 8, 30));
+            line.call_sign = pick_string(&payload, 70, 42);
+            line.name = pick_string(&payload, 112, 120);
+            ...
+        }
+
+```
 
 ### Arc Mutexes and Hash maps
 Assembling multiline messages in multiple threads requires caching sentence fragments in a shareable way.  This program uses a shared hash-map wrapped in a mutex to hold sentence fragments. Again
