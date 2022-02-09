@@ -16,9 +16,9 @@ The Rust language made its debut in 2009 as a side project of Mozilla programmer
 
 I was curious how Rust could help with a data engineering issue that emerges from the global monitoring of ships.
 
-# Automatic Identity System
+# Automatic Identification System
 
-By international agreement, ocean going ships must transmit voyage data using the _Automatic Identity System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
+By international agreement, ocean going ships must transmit voyage data using the _Automatic Identification System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
 
 [^ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
 
