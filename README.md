@@ -388,11 +388,11 @@ Rust lives up to its advertising as a _blazingly_ fast language.
 
 All results are from running Macbook 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
 
-| Sample size|default|5,000|1,000,000|5,000,000|9,000,000| estimate per day (default)|
-|------------|------:|----:|--------:|--------:|--------:|-----------------:|
+| Sample size|timing| forecasted volume per day|
+|------------|------:|-----------------:|
 | 1 million | 7s |12,342,857,142|
 | 25 million | 65s |33,230,769,230 |
-| 174 million | 34,560,000,000|
+| 174 million | 435s | 34,560,000,000|
 
 These figures suggest that the software would be able to process a 50 billion row AIS archive in just under two days on a single laptop.
 
