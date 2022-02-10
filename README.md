@@ -82,6 +82,8 @@ The program I wrote uses threads to distribute the workload over all available c
 
 The receiving thread parses the single line position messages, and forwards the results to a file writer as a JSON packet. Multiline sentences are passed to a second pool of threads that cache and reassemble sentence fragments. Again these results are forwarded to the file writer as a JSON string.
 
+Because processing is handed off to competing concurrent threads, there's no order guarantees in output. Queuing delays and differences in processing time will ensure the output for each report is not in the same order as the input.
+
 ![Program overview](flow.png)
 
 The following are some of the highlights of the program.
@@ -337,6 +339,14 @@ The output of the program can be loaded in Pandas with the following command.
 import pandas as pd
 df=pd.read_json("output.json", lines=True)
 ```
+
+I can also be converted to a compressed Parquet file using use Dominik Moritz's _json2parquet_ program[^json2parquet].
+
+[^json2parquet]: https://github.com/domoritz/json2parquet
+
+```
+json2parquet -c brotli norway.json norway.parquet
+``
 ## Running the program
 Executing the program without parameters will output the following.
 ```
