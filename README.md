@@ -340,7 +340,7 @@ import pandas as pd
 df=pd.read_json("output.json", lines=True)
 ```
 
-I can also be converted to a compressed Parquet file using use Dominik Moritz's _json2parquet_ program[^json2parquet].
+It can also be converted to a compressed Parquet file using use Dominik Moritz's _json2parquet_ program[^json2parquet].
 
 [^json2parquet]: https://github.com/domoritz/json2parquet
 
