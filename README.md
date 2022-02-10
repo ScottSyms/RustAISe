@@ -346,7 +346,7 @@ I can also be converted to a compressed Parquet file using use Dominik Moritz's 
 
 ```
 json2parquet -c brotli norway.json norway.parquet
-``
+```
 ## Running the program
 Executing the program without parameters will output the following.
 ```
@@ -382,8 +382,6 @@ ARGS:
 OPTIONS:
     -h, --help       Print help information
     -V, --version    Print version information
-
-
 ```
 
 Uncompressing the _norway.7z_ program and running the following will generate a JSON file with parsed contents.
