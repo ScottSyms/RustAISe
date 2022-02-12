@@ -20,6 +20,7 @@ const AIS_CHAR_BITS: usize = 6;
 // for serialization and copying.
 #[derive(Serialize, Default, Clone, Debug)]
 struct PositionReport {
+    #[serde(skip_serializing)]
     pub sentence: String,
     pub landfall_time: String,
     pub group: String,
