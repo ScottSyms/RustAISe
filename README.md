@@ -18,9 +18,13 @@ I was curious how Rust could help with a data engineering issue that emerges fro
 
 # Automatic Identification System
 
-By international agreement, ocean going ships must transmit voyage data using the _Automatic Identification System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
+By international agreement, ocean going ships must transmit voyage data using the _Automatic Identification System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The paper _Building a Maritime Picture in the Era of Big Data: The Development of the Geospatial Communication Interface+_ describes the challenges in managing vessel position data for global surveillance[^gci].
+
+The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
 
 [^ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
+
+[^gci]: Building a Maritime Picture in the Era of Big Data: The Development of the Geospatial Communication Interface+, M. Scott Syms; Anthony W. Isenor; Brad Chivari; Andrew DeBaie; Alicia Hogue; Brad Glessing, International Conference on Military Communications and Information Systems (ICMCIS), 2021
 
  The data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
 
