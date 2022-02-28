@@ -409,15 +409,15 @@ All results are from running Macbook 2.3 GHz 8-Core Intel Core i9 with 32Gb of m
 These figures suggest that the software would be able to process a 50 billion row AIS archive in just under two days on a single laptop.
 
 ### Last Thoughts
-This is my first attempt to do some serious programming in Rust, but even from this vantage point, I'm able to see room for improvement.  
+This is a first attempt to do serious programming in Rust but even from a novice's vantage point, there's room for improvement.  
 
-Being new to the language, I know that my approach to the solution may not be idiomatic, ie/ making the best use of what Rust offers to solve the problem, but I'm pleased with my progress on a first attempt.
+First, the solution may not be idiomatic, ie/ making the best use of what Rust offers to solve the problem.
 
 The program largely ignores Rust's error handling framework.  Initializing the struct with default values may unnecessarily consume memory. Leveraging struct methods and custom traits may offer some advantages. 
 
 Definitely refactoring the code into Rust's library and module format would be a step toward code readability.  Finally, Rust offers unit-testing framework that would make the code more maintainable.
 
-Generally, the juice is worth the squeeze here. Rust works as advertised and the effort in learning the language would be paid back in situations where the code will be reused or execution time is a concern.
+Generally, the juice is worth the squeeze here. Even with the code's drawbacks, Rust works as advertised and the effort in learning the language would is worthwhile in situations where the code will be reused or execution time is a concern.
 
 ### Getting the code
 All code is available at https://github.com/ScottSyms/RustAISe.
