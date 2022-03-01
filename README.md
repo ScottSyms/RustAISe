@@ -402,7 +402,7 @@ the _FLOW LIMIT_ parameter allows you to limit the the data held in the message 
 ### Speed results
 Rust lives up to its advertising as a _blazingly_ fast language.
 
-All results are from obtained from a Macbook 2.3 GHz 8-Core Intel i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
+All results are obtained from a Macbook 2.3 GHz 8-Core Intel i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
 
 | Sample size|timing| forecasted volume per day|
 |------------|------:|-----------------:|
