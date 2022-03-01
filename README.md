@@ -8,25 +8,25 @@ But Python has issues- the very elements that make it accessible and usable- dyn
 
 For scientists working with large data or heavy computation, Python provides some work arounds- computational accelerations like Numba, PyPy and Piston use coding optimisations to add speed; distributing the compute across several machines with Dask aggregates the computing power of several machines;  and interfaces to big data  toolkits like PyData leverage the huge ecosystem built on Hadoop and friends. All of these solutions add complexity to development and deployment environments.
 
-Near the end of 2020, the science publication _Nature_ suggested an alternative[^nature] to some of the traditional approaches to science data computation. It suggested Rust, an emerging, highly performant new language.
+Near the end of 2020, the science publication _Nature_ suggested an alternative[^nature] to some of the traditional approaches to science data computation. It proposed Rust, an emerging, highly performant new language.
 
 [^nature]: https://www.nature.com/articles/d41586-020-03382-2
 
-The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++, but provides better safeguards around memory safety and concurrency. Like C++ and Python, it can be used across a range of platforms, from microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing them to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
+The Rust language made its debut in 2009 as a side project of Mozilla programmer Graydon Hoare. It offers similar performance to C++, but provides better safeguards around memory use and concurrency. Like C++ and Python, it can be used across a range of platforms, from microcontroller programming for data collection to high capacity asynchronous web application programming. Rust applications can be compiled to _web assembly_, allowing them to run in the browser at near-native speeds, or as highly performant Python extensions through the PyO3 project.
 
 I was curious how Rust could help with a data engineering issue that emerges from the global monitoring of ships.
 
 # Automatic Identification System
 
-By international agreement, ocean going ships must transmit voyage data using the _Automatic Identification System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of maritime activity. The paper _Building a Maritime Picture in the Era of Big Data: The Development of the Geospatial Communication Interface+_ describes the challenges in managing vessel position data for global surveillance[^gci].
+By international agreement, ocean going vessels must transmit voyage data using the _Automatic Identification System[^ais]_ (AIS). These signals can be collected from space and aggregated into a global picture of shipping activity. The paper _Building a Maritime Picture in the Era of Big Data: The Development of the Geospatial Communication Interface+_ describes the challenges in managing vessel position data for global surveillance[^gci].
 
-The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion AIS messages.
+The Canadian Space Agency manages Government of Canada contracts for space-sourced global maritime tracking data, and on any given day, makes millions of position reports available to maritime stakeholders across government. Over the past decade CSA has collected well over 50 billion messages.
 
 [^ais]: https://en.wikipedia.org/wiki/Automatic_identification_system
 
 [^gci]: Building a Maritime Picture in the Era of Big Data: The Development of the Geospatial Communication Interface+, M. Scott Syms; Anthony W. Isenor; Brad Chivari; Andrew DeBaie; Alicia Hogue; Brad Glessing, International Conference on Military Communications and Information Systems (ICMCIS), 2021
 
- The data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
+ AIS data is encoded in an opaque format codified by the National Marine Electronics Association (NMEA 0183/AIS).
 
 ```
 1569890647\s:VENDOR,q:u,c:1569890555*5F\!AIVDM,1,1,,A,13KG9?10031jQUNRI72jM5?40>@<,0*5C
@@ -44,7 +44,7 @@ Although some of the message is human readable, important data about ship identi
 [^raymond]: https://gpsd.gitlab.io/gpsd/AIVDM.html
 
 ## Decoding AIS
-The goal of this program is to convert an archive of raw AIS data to a JSON equivalent.  The output should preserve the original data for reprocessing if needed, but also expose some of the data in the message for filtering on load.  Reformatting the data as JSON is a valuable step in the data engineering pipeline as it allows the datato be loaded in Pandas, a database, or further translated into a read optimized format like Apache Parquet or feather.
+The goal of the Rust program is to convert an archive of raw AIS data to a JSON equivalent.  The output should preserve the original data for reprocessing if needed, but also expose some of the data in the message for filtering on load.  Reformatting the data as JSON is a valuable step in the data engineering pipeline as it allows the data to be loaded in a dataframe, a database, or further translated into a read optimized format such as Apache Parquet.
 
 ```
 {
@@ -75,13 +75,13 @@ The goal of this program is to convert an archive of raw AIS data to a JSON equi
 ```
 
 _The desired output: JSON packet preserving original data alongside derived elements._
+# Walking through the program
 
-REGEX is used to extract the human readable data in the AIS sentence, but work has to be done to unwrap the the data from the six-bit payload. Unlocking this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
+
 
 ![Converting six-bit ascii to text](bitextract.png)
 _Extracting data from the payload requires it to be converted to binary._
 
-# Walking through the program
 The program I wrote uses threads to distribute the workload over all available computer cores with message passing channels relaying the data between threads. The processing is divided into three pools: the first is a single threaded process that reads a source file of AIS data, inserts each line into a struct field, and passes the struct to a pool of threads that does the initial parsing through a channel.
 
 The receiving thread parses the single line position messages, and forwards the results to a file writer as a JSON packet. Multiline sentences are passed to a second pool of threads that cache and reassemble sentence fragments. Again these results are forwarded to the file writer as a JSON string.
@@ -92,6 +92,7 @@ Because processing is handed off to competing concurrent threads, there's no ord
 
 The following are some of the highlights of the program.
 
+REGEX is used to extract the human readable data in the AIS sentence, but work has to be done to unwrap the the data from the six-bit payload. Unlocking this data involves converting the payload to a binary number, carving out a subset of the bits and casting the result as a string, or an integer.
 ### Crates and version pinning
 
 Rust makes use of a well thought out packaging system called _crates_. Package dependencies and build directives can be specified in this file.
@@ -117,16 +118,20 @@ serde_json = "1.0.78"
 lto = true
 ```
 
-Crate dependencies must be listed with a specific version; upgrading to a different release of the crate has to be done explicitly, mitigating errors from moving to different library versions.
+Crate dependencies can be listed with a specific version; upgrading to a different release of the crate has to be done explicitly, mitigating errors from moving to different library versions.
 
 ### The iron fist of variable scoping
 One of the methods Rust uses to maintain memory safety is to tightly control variable scope.
 
 ```
+// Let's assign 21 to x
 let x = 21;
-{
+    {
+    // Now let's assign 12 to x
     let x =12;
     }
+// Since the scope has ended for the previous assignment
+// the value of x is still 21
 println!("{}", x);
 ```
 
@@ -394,11 +399,10 @@ rustaise norway.nmea norway.json
 ```
 the _FLOW LIMIT_ parameter allows you to limit the the data held in the message channels.  In some memory constrained systems, capping in-flight messages prevents out of memory issues.  The _PARSE THREADS_ and _MULTILINE THREADS_ are optional parameters that provide control over the number of threads created for the single and multiple line parsing threads.
 
-
 ### Speed results
 Rust lives up to its advertising as a _blazingly_ fast language.
 
-All results are from running Macbook 2.3 GHz 8-Core Intel Core i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
+All results are from obtained from a Macbook 2.3 GHz 8-Core Intel i9 with 32Gb of memory.  In the timings table below, the row indicates the size of the input file.  The first column shows the processing time required and the final column forecasts how much data could be processed in a day at the sample rate.
 
 | Sample size|timing| forecasted volume per day|
 |------------|------:|-----------------:|
@@ -411,7 +415,7 @@ These figures suggest that the software would be able to process a 50 billion ro
 ### Last Thoughts
 This is a first attempt to do serious programming in Rust but even from a novice's vantage point, there's room for improvement.  
 
-First, the solution may not be idiomatic, ie/ making the best use of what Rust offers to solve the problem.
+First, because I have imperfect knowledge of the language, the solution may not be idiomatic, ie/ making the best use of what Rust offers to solve the problem.
 
 The program largely ignores Rust's error handling framework.  Initializing the struct with default values may unnecessarily consume memory. Leveraging struct methods and custom traits may offer some advantages. 
 
