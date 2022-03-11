@@ -1,5 +1,5 @@
 # DRAFT DRAFT DRAFT
-# Data Engineering in Rust
+# Big Data Engineering with Rust
 It's the richness of the Python ecosystem that makes it so useful for  science.  Python provides a range of tools that provide accessible and expressive environments with which to explore data, train machine learning models and display results. It's even been suggested that _Jupyter Notebooks_, a popular Python data exploration environment, replace the traditional scientific paper[^atlantic].
 
 [^atlantic]: https://www.theatlantic.com/science/archive/2018/04/the-scientific-paper-is-obsolete/556676/
