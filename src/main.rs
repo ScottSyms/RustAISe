@@ -3,7 +3,6 @@ use bitvec::prelude::*;
 use clap::{App, Arg};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use hashbrown::HashMap;
-use num_cpus;
 use regex::Regex;
 use serde::Serialize;
 use std::fs::File;
