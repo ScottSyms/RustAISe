@@ -312,12 +312,9 @@ fn main() {
 
     // Initiate Hashmaps for multisentence AIS messages
     // These are wrapped by ARC and Mutexes for use under multithreading.
-    let mut payload_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
-    let mut source_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
-    let mut sat_time_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
+    let payload_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let source_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let sat_time_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
 
     /*
     Create the crossbeam channels to relay the data across threads.
@@ -360,9 +357,9 @@ fn main() {
 
     for _b in 0..n_workers {
         // Initiate Hashmaps for multisentence AIS messages
-        let payload_cache = Arc::clone(&mut payload_cache);
-        let source_cache = Arc::clone(&mut source_cache);
-        let sat_time_cache = Arc::clone(&mut sat_time_cache);
+        let payload_cache = Arc::clone(&payload_cache);
+        let source_cache = Arc::clone(&source_cache);
+        let sat_time_cache = Arc::clone(&sat_time_cache);
 
         // Clonen an output channel for use in the threads
         let ready_for_output_tx = ready_for_output_tx.clone();
