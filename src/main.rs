@@ -439,7 +439,8 @@ fn main() {
                         };
                         // println!("Combined multiline: {:?}", line);
                         line = decode_payload(line);
-                        ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
+                        let line_json = serde_json::to_string(&line).unwrap();
+                        ready_for_output_tx.send(line_json).unwrap();
                     }
 
                     // *******
@@ -515,7 +516,8 @@ fn main() {
                 if line.group.is_empty() {
                     line.message_class = "singleline".to_string();
                     let line = decode_payload(line);
-                    extract_ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
+                    let line_json = serde_json::to_string(&line).unwrap();
+                    extract_ready_for_output_tx.send(line_json).unwrap();
 
                     // extract_ready_for_output_tx.send(line).unwrap();
                 } else {
