@@ -403,12 +403,12 @@ fn main() {
                     payload_lock.insert(line.group.clone(), line.raw_payload.clone());
 
                     // insert into time cache if parsed_line[3] is not empty
-                    if line.satellite_acquisition_time.len() > 0 {
+                    if !line.satellite_acquisition_time.is_empty() {
                         sat_time_lock.insert(line.group.clone(), line.satellite_acquisition_time);
                     }
 
                     // insert into source_cache if parsed_line[3] is not empty
-                    if line.source.len() > 0 {
+                    if !line.source.is_empty() {
                         source_lock.insert(line.group.clone(), line.source);
                     }
 
