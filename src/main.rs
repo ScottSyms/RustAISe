@@ -135,7 +135,7 @@ fn readable(mut o_s: String) -> String {
     if negative {
         s.insert(0, '-');
     }
-    return s;
+    s
 } // fn readable
 
 // Parse the AIS payload by extracting the message type, slicing out the bit values
@@ -202,16 +202,16 @@ fn decode_payload(mut line: PositionReport) -> PositionReport {
             // Message values not covered by the above cases.
         }
     }
-    return line;
+    line
 }
 
 // Take the last four characters of a string slice.
 fn last_four_characters(text: &str) -> &str {
     let len = text.len();
     if len > 3 {
-        return &text[len - 4..len];
+        &text[len - 4..len]
     } else {
-        return "";
+        ""
     }
 } // endof last_four_characters
 
