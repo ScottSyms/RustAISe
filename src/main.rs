@@ -170,7 +170,7 @@ fn decode_payload(mut line: PositionReport) -> PositionReport {
             let minute = pick_u64(&payload, 288, 6);
             let datestub = minute * 60 + hour * 3600 + day * 86400 + month * 2678400;
             let year: f64 = {
-                if line.satellite_acquisition_time != "" {
+                if !line.satellite_acquisition_time.is_empty() {
                     line.satellite_acquisition_time.parse::<f64>().unwrap() / 31_536_000.0
                 } else {
                     "0".parse::<f64>().unwrap()
@@ -515,7 +515,7 @@ fn main() {
 
                 // If it's a single-line message, send it to the output channel
                 // Otherwise push it to the multiline handler
-                if line.group == "" {
+                if line.group.is_empty() {
                     line.message_class = "singleline".to_string();
                     let line = decode_payload(line);
                     extract_ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
