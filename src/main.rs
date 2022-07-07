@@ -549,8 +549,7 @@ fn main() {
             }; // endof sentence
 
             // The line has to have VDM in it
-            let isais = line.find("VDM");
-            if line.find("VDM") == None {
+            if !line.contains("VDM") {
                 continue;
             }
 
