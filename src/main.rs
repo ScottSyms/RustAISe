@@ -474,7 +474,7 @@ fn main() {
             while let Ok(mut line) = raw_file_rx.recv_timeout(Duration::from_millis(queue_timeout))
             {
                 // Split the comma delimited line and pick out the payload and other elements
-                let payload = &line.sentence.split(",").collect::<Vec<_>>();
+                let payload = &line.sentence.split(',').collect::<Vec<_>>();
                 line.channel = payload[payload.len() - 3].to_string();
                 line.raw_payload = payload[payload.len() - 2].to_string();
                 // println!("RAW: Payload: {:?}", line.raw_payload);
@@ -595,7 +595,7 @@ fn main() {
         if counter % 100000 == 0 {
             println!("Writing {} lines to file.", readable(counter.to_string()));
         }
-        write!(buf, "{}\n", line);
+        writeln!(buf, "{}", line).unwrap();
     }
 
     // wait for the threads to complete
