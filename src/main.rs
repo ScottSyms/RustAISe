@@ -293,7 +293,7 @@ fn main() {
 
     // Match the parse_threads variable
     let extraction_threads: usize = {
-        if let Some(i) = matches.value_of("EXTRACTION_THREADS") {
+        if let Some(i) = matches.value_of("PARSE_THREADS") {
             i.parse::<usize>().unwrap()
         } else {
             // default value
