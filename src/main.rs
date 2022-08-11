@@ -3,7 +3,6 @@ use bitvec::prelude::*;
 use clap::{App, Arg};
 use crossbeam_channel::{bounded, Receiver, Sender};
 use hashbrown::HashMap;
-use num_cpus;
 use regex::Regex;
 use serde::Serialize;
 use std::fs::File;
@@ -135,7 +134,7 @@ fn readable(mut o_s: String) -> String {
     if negative {
         s.insert(0, '-');
     }
-    return s;
+    s
 } // fn readable
 
 // Parse the AIS payload by extracting the message type, slicing out the bit values
@@ -171,7 +170,7 @@ fn decode_payload(mut line: PositionReport) -> PositionReport {
             let minute = pick_u64(&payload, 288, 6);
             let datestub = minute * 60 + hour * 3600 + day * 86400 + month * 2678400;
             let year: f64 = {
-                if line.satellite_acquisition_time != "" {
+                if !line.satellite_acquisition_time.is_empty() {
                     line.satellite_acquisition_time.parse::<f64>().unwrap() / 31_536_000.0
                 } else {
                     "0".parse::<f64>().unwrap()
@@ -202,16 +201,16 @@ fn decode_payload(mut line: PositionReport) -> PositionReport {
             // Message values not covered by the above cases.
         }
     }
-    return line;
+    line
 }
 
 // Take the last four characters of a string slice.
 fn last_four_characters(text: &str) -> &str {
     let len = text.len();
     if len > 3 {
-        return &text[len - 4..len];
+        &text[len - 4..len]
     } else {
-        return "";
+        ""
     }
 } // endof last_four_characters
 
@@ -313,12 +312,9 @@ fn main() {
 
     // Initiate Hashmaps for multisentence AIS messages
     // These are wrapped by ARC and Mutexes for use under multithreading.
-    let mut payload_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
-    let mut source_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
-    let mut sat_time_cache: Arc<Mutex<HashMap<String, String>>> =
-        Arc::new(Mutex::new(HashMap::new()));
+    let payload_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let source_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let sat_time_cache: Arc<Mutex<HashMap<String, String>>> = Arc::new(Mutex::new(HashMap::new()));
 
     /*
     Create the crossbeam channels to relay the data across threads.
@@ -361,9 +357,9 @@ fn main() {
 
     for _b in 0..n_workers {
         // Initiate Hashmaps for multisentence AIS messages
-        let payload_cache = Arc::clone(&mut payload_cache);
-        let source_cache = Arc::clone(&mut source_cache);
-        let sat_time_cache = Arc::clone(&mut sat_time_cache);
+        let payload_cache = Arc::clone(&payload_cache);
+        let source_cache = Arc::clone(&source_cache);
+        let sat_time_cache = Arc::clone(&sat_time_cache);
 
         // Clonen an output channel for use in the threads
         let ready_for_output_tx = ready_for_output_tx.clone();
@@ -407,12 +403,12 @@ fn main() {
                     payload_lock.insert(line.group.clone(), line.raw_payload.clone());
 
                     // insert into time cache if parsed_line[3] is not empty
-                    if line.satellite_acquisition_time.len() > 0 {
+                    if !line.satellite_acquisition_time.is_empty() {
                         sat_time_lock.insert(line.group.clone(), line.satellite_acquisition_time);
                     }
 
                     // insert into source_cache if parsed_line[3] is not empty
-                    if line.source.len() > 0 {
+                    if !line.source.is_empty() {
                         source_lock.insert(line.group.clone(), line.source);
                     }
 
@@ -443,7 +439,8 @@ fn main() {
                         };
                         // println!("Combined multiline: {:?}", line);
                         line = decode_payload(line);
-                        ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
+                        let line_json = serde_json::to_string(&line).unwrap();
+                        ready_for_output_tx.send(line_json).unwrap();
                     }
 
                     // *******
@@ -477,7 +474,7 @@ fn main() {
             while let Ok(mut line) = raw_file_rx.recv_timeout(Duration::from_millis(queue_timeout))
             {
                 // Split the comma delimited line and pick out the payload and other elements
-                let payload = &line.sentence.split(",").collect::<Vec<_>>();
+                let payload = &line.sentence.split(',').collect::<Vec<_>>();
                 line.channel = payload[payload.len() - 3].to_string();
                 line.raw_payload = payload[payload.len() - 2].to_string();
                 // println!("RAW: Payload: {:?}", line.raw_payload);
@@ -516,10 +513,11 @@ fn main() {
 
                 // If it's a single-line message, send it to the output channel
                 // Otherwise push it to the multiline handler
-                if line.group == "" {
+                if line.group.is_empty() {
                     line.message_class = "singleline".to_string();
                     let line = decode_payload(line);
-                    extract_ready_for_output_tx.send(serde_json::to_string(&line).unwrap());
+                    let line_json = serde_json::to_string(&line).unwrap();
+                    extract_ready_for_output_tx.send(line_json).unwrap();
 
                     // extract_ready_for_output_tx.send(line).unwrap();
                 } else {
@@ -551,8 +549,7 @@ fn main() {
             }; // endof sentence
 
             // The line has to have VDM in it
-            let isais = line.find("VDM");
-            if line.find("VDM") == None {
+            if !line.contains("VDM") {
                 continue;
             }
 
@@ -598,7 +595,7 @@ fn main() {
         if counter % 100000 == 0 {
             println!("Writing {} lines to file.", readable(counter.to_string()));
         }
-        write!(buf, "{}\n", line);
+        writeln!(buf, "{}", line).unwrap();
     }
 
     // wait for the threads to complete
